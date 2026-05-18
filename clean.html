@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html> <head>
+<title>convert.pl</title>
+<link rel=stylesheet type="text/css" href="kbroman.css">
+</head>
+<body><pre><plaintext>
+#!/usr/bin/perl
+
+$^I = '.bak';		# inplace-edit extension
+$\ = "\n";		# automatically add newline on print
+
+$prompt = '%';
+while ($ARGV[0] =~ /^-/) {
+    $_ = shift;
+    last if /^--/;
+    if (/^-p/) {
+    s/^-p//;
+    $prompt = $_;
+    }
+}
+
+if ($#ARGV < 0) {
+    die "Usage: clean filename1 [filename2 [filename3 ...]]\n";
+}
+
+print "The backup copy will be named with the extension \'.bak\'.";
+
+while (<>) {
+  Begin:
+    # chop off trailing whitespace
+    while (/[ \t\n\r]$/) {
+    chop;
+    }
+    # do backspacing
+    while (/[^\b][\b]/) {
+    s/[^\b][\b]//;
+    }
+    # do ctrl-R (reprint)
+    if (/$prompt .*\^R$/o) {
+    # get rid of the ctrl-R
+    s//$prompt /;
+    # join the next line.
+    $_ .= <>;
+    # the newly appended line might have backspaces or a ctrl-R,
+    # so go back to the beginning and clean the line again.
+    goto Begin;
+    }
+    # EOF
+    s/\^D[\b][\b]/^D/g;
+    # don't print empty input lines
+    print unless (/$prompt $/o);
+}

@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html> <head>
+<title>Intro to Perl</title>
+<link rel=stylesheet type="text/css" href="kbroman.css">
+</head>
+
+<body>
+
+<h2>Introduction to perl</h2>
+
+<p>All statisticians should be proficient in <a
+href="http://www.biostat.wisc.edu/~kbroman/Cintro">C</a> (for speed),
+<a href="http://www.biostat.wisc.edu/~kbroman/perlintro">perl</a>
+(for data manipulation), and
+<a href="http://www.biostat.wisc.edu/~kbroman/Rintro">R</a> (for
+interactive analyses and graphics).  Think "CPR".
+
+<p> I find the perl programming language absolutely crucial for
+manipulating data files.  For my work in statistical genetics,
+virtually every new set of data that I receive is in a unique format
+and so must be converted into one or each of the various formats
+required by my own software and others' software.  (Moreover, I often
+wish to combine such data with other information such as the locations
+of genetic markers and so forth.)  To do such manipulation &#147;by
+hand&#148; would be a nightmare.  Having a program to do such things
+is valuable for at least three reasons: (a) it's faster, (b) it avoids
+errors, and (c) it can quickly be redone if the primary data are modified.
+
+<p> Most C programmers likely realize that it would be a real pain to
+do such manipulation of text files in a C program.  But many things
+that are hard to do in C are easy in perl.  Perl is a combination of
+the unix utilities sed, awk and also shell scripting.  It is excellent
+for text manipulation, and one should make special use of its regular
+expression facilities.
+
+<p> I should say that another major use of perl, for me, is to run
+simulations testing/using other people's programs, pulling out summary
+bits from the output of such programs.  I can (and sometimes do) write
+the simulation part within perl, but mostly I use the shell script
+features of perl to repeatedly call other programs, and the text
+processing features to pull out the interesting pieces from the output
+of other programs.
+
+<p> In this document, I will try to assist the reader in getting
+started in perl programming.  Perl can do a mess of things.  I'll
+focus solely on the manipulation of text files, since that is probably
+the most important use of perl for statisticians.
+
+<p> If you have any suggestions for improving this document, please
+send me an email (kbroman at biostat.wisc.edu).
+
+<h3>Topics</h3>
+<ul>
+  <li><a href="#resources">Resources</a>
+  <li><a href="#start">Getting started</a>
+  <li><a href="#ex1">Stupid example</a>
+  <li><a href="#ex2">Complex example</a>
+      <ul>
+    <li><a href="#input">Input data</a>
+    <li><a href="#output">Output data</a>
+    <li><a href="#program">Perl program</a>
+      </ul>
+   <li><a href="#other">Other things</a>
+</ul>
+
+<a name="resources"><h3>Resources</h3></a>
+
+<p> Before I get started, I need to mention some books and web
+resources:
+
+<h4>Books</h4></a>
+
+<ul>
+  <li> <a href="http://www.amazon.com/exec/obidos/ASIN/0596006225/7210-20">Perl
+CD Bookshelf 4.0</a> [A bunch of books on a CD-ROM at a great price]
+
+  <li> <a
+      href="http://www.amazon.com/exec/obidos/ASIN/0596101058/7210-20">Learning Perl (4th ed)</a> [The book for getting started]
+
+  <li> <a
+      href="http://www.amazon.com/exec/obidos/ASIN/0596000278/7210-20">Programming Perl (3rd ed)</a> [The reference]
+
+  <li> <a
+      href="http://www.amazon.com/exec/obidos/ASIN/0596003137/7210-20">Perl Cookbook (2nd ed)</a> [Recipes of things you want to do or never thought of doing]
+
+  <li> <a
+      href="http://www.amazon.com/exec/obidos/ASIN/0596002890/7210-20">Mastering Regular Expressions (2nd ed)</a> [If you really
+      want to make use of regular expressions, get this book.]
+
+  <li><a
+      href="http://www.amazon.com/exec/obidos/ASIN/0596004788/7210-20">Learning Perl Objects, References & Modules</a> [Looks like a good book on how to do object-oriented and modular perl properly.]
+
+  <li><a
+      href="http://www.amazon.com/exec/obidos/ASIN/0596000804/7210-20">Beginning Perl for Bioinformatics</a> [Mostly for sequence analysis]
+
+  <li><a
+      href="http://www.amazon.com/exec/obidos/ASIN/0596003072/7210-20">Mastering Perl for Bioinformatics</a> [Mostly for sequence analysis]
+
+</ul>
+
+<h4>Tutorials</h4>
+
+<ul>
+  <li> <a
+      href="http://stein.cshl.org/genome_informatics/#schedule">Genome
+      Informatics Course</a> at Cold Spring Harbor.  [Includes
+      on-line notes for a series of lectures on perl scripting; there is <a href="http://stein.cshl.org/genome_informatics/using_perl_modules/">one section</a> that I refer to regularly.]
+
+  <li>A lecture of mine on Perl for human linkage analysis: [<a
+      href="http://www.biostat.wisc.edu/~kbroman/teaching/misc/perl4linkage_ho.pdf">pdf (42k)</a>]
+
+</ul>
+
+<h4>Other links</h4>
+
+<ul>
+  <li><a href="http://www.cpan.org">Comprehensive Perl Archive Network
+      (CPAN)</a>
+
+  <li><a href="http://www.activestate.com/ActivePerl">Perl for
+      Windows</a>
+
+  <li><a href="http://www.bioperl.org">Bioperl</a> [Perl for
+      bioinformatics and genomics: mostly for sequence analysis]
+</ul>
+
+
+
+<a name="start"><h3>Getting started</h3></a>
+
+<p> Perl is an interpreted language (as opposed to a compiled
+language).  The perl interpreter is usually located in
+<code>/usr/bin/perl</code>.  On the Hopkins biostatistics
+system, the perl libraries and so forth are located in
+<code>/opt/LWperl</code>.  (That's important, because the perl
+libraries [see <a href="http://www.cpan.org">CPAN</a>] contain
+enourmous amounts of excellent code that we can reuse.
+
+<p> To get a perl program to run, you place the code in a text file,
+say <code>program.pl</code>.  The first line of the program should be
+<blockquote><code><pre>#!/usr/bin/perl -w
+</pre></code></blockquote>
+
+<p> Then make the file executable using (from the unix command line)
+
+<blockquote><code><pre>chmod +x program.pl
+</pre></code></blockquote>
+
+<p> Then you just type <code>program.pl</code> to get the thing to run.
+[Alternatively, you can skip the <code>#!/usr/bin/perl</code>
+and <code>chmod</code> bit and type <code>perl -w program.pl</code>.]
+<b>Note</b>: the <code>-w</code> switch turns on perl's warnings
+facility to help you to find errors in your code. Type
+<code>perl -h</code> or <code>man perl</code> for a complete list of such
+switches.  (I'm embarassed to admit that I seldom use the
+<code>-w</code> switch myself.)
+
+
+<a name="ex1"><h3>The usual stupid first example</h3></a>
+
+<p> Following tradition, I'll give a stupid first example to show how
+to get a perl program to run.  We'll consider a program that prints
+the phrase, &#147;Hello, world!&#148;
+
+<p> Here is the code:
+<blockquote><code><pre>#!/usr/bin/perl -w
+
+print("Hello, world!\n");
+</pre></code></blockquote>
+
+
+<p> Here is some sample input and output:
+<blockquote><code><pre>> hello.pl
+Hello, world!
+>
+</pre></code></blockquote>
+
+<p> <b>Comments:</b>
+<ul>
+  <li> Remember you need <code>#!/usr/bin/perl</code> as the
+      first line, and then use <code>chmod +x theprog.pl</code> to make the
+      file executable.
+  <li> <code>print</code> (obviously) is a command for printing.  Like
+      in C, statements must end with a semicolon.  Also like in C,
+      <code>\n</code> is the code for a &#147;newline.&#148;
+</ul>
+
+<a name="ex2"><h3>A much more complex example</h3></a>
+
+<p> Here I will discuss a fabricated but relatively realistic example
+of reorganizing a set of data.  I must warn you...this is maybe a bit
+too complicated for a second example.
+
+<p> I received, from a collaborator, three
+files: a file giving the genotype data for a set of individuals at a
+set of genetic markers on a single chromosome, a file giving the
+parents and sex of each individual, and a file giving the order of the
+markers along the chromosome.  I want to combine the data into a
+single file in the format used by the program <a
+href="http://linkage.rockefeller.edu/soft/crimap/"><code>CRI-MAP</code></a>
+(a <code>.gen</code> file).
+
+<a name="input"><h4>Input data</h4></a>
+<p>Here is the input data:
+<ul>
+  <li><a href="genotypes.txt"><code>genotypes.txt</code></a> [the genotype data]
+      <blockquote>
+      Each row corresponds to a single marker.  The genotype data for
+      an individual is a pair of numbers separated by <code>/</code>.
+      Each genotype is given seven characters, with no spaces between
+      columns, and missing genotypes are left completely blank.  The
+      individuals are identified in the first row, with family ID and
+      individual ID separated by a hyphen.  The markers have been
+      sorted by their names.
+      </blockquote>
+
+  <li><a href="families.txt"><code>families.txt</code></a> [the family data]
+      <blockquote>
+      Each row corresponds to a single individual, and is relatively
+      straight forward.  In the father and mother columns, 0's (for
+      the founders in each family) indicate missing.  In the sex
+      column, 1 = male and 2 = female.
+      </blockquote>
+
+  <li><a href="markers.txt"><code>markers.txt</code></a> [the genetic markers]
+      <blockquote>
+      This is a simple list of the markers in their order along the
+      chromosome.
+      </blockquote>
+
+</ul>
+
+<a name="output"><h4>Output data</h4></a>
+<p>Here is the output data, in the format I want (as a
+<code>CRI-MAP</code> <code>.gen</code> file):
+<ul>
+  <a href="data.gen"><code>data.gen</code></a>
+  <blockquote>
+  The first line gives the number of families.
+  The second line gives the number of markers.
+  The next set of lines gives the marker names, in their order along
+  the chromosome. <br> <br>
+  Following that is a group of lines for each family: the family ID,
+  the number of individuals in the family, and two lines for each individual:
+  the first line contains the individual ID, the IDs of the
+  individual's mother and father, and then sex (1 = male; 0 = female);
+  the second line contains the genotype data, pairs of numbers all
+  separated by spaces, with things in the same order as the marker names and 0's in
+  place of missing data.
+  </blockquote>
+</ul>
+<p>One might say, perhaps, that this is more of a mess then the original
+data, but at least now it's all in one file, and (more importantly),
+it's now ready for use with the CRI-MAP program.
+
+<a name="program"><h4>Perl program</h4></a>
+<p> Now, here's the perl program to do the conversion.  It's not very
+long, but there are a lot of rather complicated things going on, which
+I will explain a bit at a time below. <b>Note</b>: I've put this in an
+html file so that you can view it easily.  If you want to save it and
+try running it, be sure to first clip off the html code at the top of
+the file.
+<ul>
+  <a href="convert.html">convert.pl</a>
+</ul>
+
+<p>Before I go into the details of the code, I should give an
+important <b>caveat</b>.  I'm not a terribly good perl programmer: I
+likely break a lot of the rules, and my code is not very efficient or
+concise.  Still, my programs generally do what I want them to do.  One
+can use a variety of different approaches to any one coding problem in
+perl.  The approaches I've taken are not necessary the best (but they
+do work).
+
+<p> Okay, now here's the detailed explanation of the code.
+
+<blockquote><code><pre>#!/usr/bin/perl
+#
+# Combine the data in "genotypes.txt", "markers.txt" and "families.txt"
+# and convert into a CRI-MAP .gen file.
+</pre></code></blockquote>
+
+<p> The first line is as I'd mentioned above: it's needed so that the
+unix shell knows to call the perl compiler.  Note that I dropped the
+<code>-w</code> switch, which turns on perl's warnings, because they
+end up saying a bunch of stuff about uninitialized variables which I
+find painful.  Also note that the <code>#</code> symbol indicates a
+comment.  Wherever it appears, the rest of the line is treated as a
+comment (and thus ignored by the compiler).
+
+<blockquote><code><pre># file names
+$gfile = "genotypes.txt";  # genotype data
+$mfile = "markers.txt";    # list of markers, in order
+$ffile = "families.txt";   # family information
+$ofile = "data.gen";       # output file
+</pre></code></blockquote>
+
+<p> Here I define the names of the three input files and the output
+file.  In perl, scalar variables consist of a name preceded by a
+<code>$</code> symbol.  (I found the <code>$</code>, <code>@</code>
+and <code>%</code> symbols very confusing when I was first learning
+perl, since it is so different than C.)  Note that I do not declare
+variables before I start using them.  Also note that (like C) each
+statement ends with a semicolon.  A funny (but very convenient)
+feature of perl is that variables are not explicitly integers, doubles
+or strings.  Perl converts scalars from integer to double to string
+according to context; we seldom need to worry about it.
+
+<blockquote><code><pre># read marker names and place in the vector @markers
+open(IN, $mfile) or die("Cannot read from $mfile");
+</pre></code></blockquote>
+
+<p> This line opens the file <code>$mfile</code> for reading, using
+the &#147;file handle&#148; <code>IN</code>.  If the file fails to
+open (e.g., if it doesn't exist or we don't have read permission),
+<code>open</code> returns a 0, and so the other half of the
+<code>or</code> statement is executed.  The statement <code>die</code>
+stops the program, printing its contents.  A nice feature of perl is
+that it will evalute any variables inside the quotes, so that the name
+of the marker data file is printed rather than the variable name
+<code>$mfile</code>. If the file is successfully opened, a non-zero
+value is returned, and the right side of the <code>or</code> statement
+is ignored.  One could use a more complex <code>if</code> statement,
+but this is concise and (with practice) quite readable.
+
+<blockquote><code><pre>while($line = &lt;IN&gt;) {
+    chomp($line);
+    push(@markers, $line);
+}
+close(IN);
+</pre></code></blockquote>
+
+<p> This group of code reads each successive line in the
+<code>$mfile</code> file, strips off the newline characters at the end
+of each line, and then builds up a vector <code>@markers</code>
+containing the marker names in the same order as in the file.
+
+<p> The <code>while</code> statement loops until its argument is zero.
+
+<p> In the <code>$line = &lt;IN&gt;</code> statement, the
+<code>&lt;IN&gt;</code> part reads a single line from the file (that's
+how the file handle <code>IN</code> is used) and places it into the
+scalar <code>$line</code>.  When the end of the file is reached, this
+statement has value zero, and so the <code>while</code> loop
+is broken.
+
+<p> <code>chomp($line)</code> cuts off the ending &#147;newline&#148;
+character from <code>$line</code>, if there is one.  (Compare this to
+<code>chop</code>, which cuts off the last character no matter what it
+is.)  <b>Note</b>: Be careful when you move files between Windows (and
+perhaps MacOS) and unix, since the end-of-line characters are different
+between them.  This has been a constant source of irritation for me.
+The perl script <code><a href="clean.html">clean</a></code> (which I
+got from the guys in the UC Berkeley <a
+href="http://www.stat.berkeley.edu/facilities/scf.html">Statistical Computing Facility</a>, to whom I am
+eternally grateful for many reasons) fixes text files from Windows to
+conform to the unix format.  Use it.
+
+<p> <code>@markers</code> is a vector (i.e. an ordered set of scalars).
+The <code>@</code> denotes vector just as <code>$</code> denoted
+scalar.
+
+<p> The function <code>push</code> places the scalar
+<code>$line</code> onto the end of the vector <code>@markers</code>.
+
+<p> <code>close(IN)</code> closes the file <code>$mfile</code>.  I
+don't think it's absolutely necessary, but I always do it.
+
+<p> (That sure was a lot of explantion for five lines of code!  Maybe
+I should be chopping things up into smaller bits.)
+
+<blockquote><code><pre># read family information and place in the hashes %dad, %mom, %sex
+open(IN, $ffile) or die("Cannot read from $ffile");
+$line = &lt;IN&gt;;
+while($line = &lt;IN&gt;) {
+    chomp($line);
+</pre></code></blockquote>
+
+<p> This set of lines should now be clear from the above.
+
+<blockquote><code><pre>    @v = split(/\s+/, $line);
+</pre></code></blockquote>
+
+<p> In this line, the function <code>split</code> chops the scalar
+<code>$line</code> at the regular expression <code>\s+</code>.  The
+two <code>/</code> symbols indicate a &#147;regular expression&#148;
+(a pattern to be matched), <code>\s</code> stands for any &#147;white
+space&#148; (spaces, tabs, etc.), and <code>+</code> indicates one or
+more bits of white space.  The return value is a vector,
+<code>@v</code> composed of the bits of <code>$line</code>, now split
+up.
+
+<blockquote><code><pre>    if($v[0] eq "") { shift @v; }
+</pre></code></blockquote>
+
+<p> The point of this lines is that if <code>$line</code> has leading
+whitespace, the first element of the vector returned from
+<code>split</code> will be empty.  Here we look for that, and dump the
+empty element if there is one.  Thus a line like
+<pre>     1          1      0      0   1</pre>
+<p>is initially converted into the vector <code>("",1,1,0,0,1)</code>,
+and after this line it becomes <code>(1,1,0,0,1)</code>.
+
+<p> <code>$v[0]</code> is the way that we refer to a single element of
+a vector.  Vectors are indexed by 0, 1, 2, etc.  We could refer to a
+&#147;subvector&#148; by <code>@v[(1,3,5)]</code>.  Note that when we
+use <code>@v</code> in a &#147;scalar&#148; context, its value taken
+to be the length of the vector.  Thus <code>@v[(1..(@v-1))]</code> is
+<code>@v</code> but dropping the first element.  (I guess I should
+mention that <code>($a..$b)</code> creates a vector with a sequence of
+numbers from <code>$a</code> to <code>$b</code>, inclusive, with
+increments of 1.
+
+<p> <code>eq</code> is for string comparison (compare this to
+<code>==</code> for numeric comparison)...this part tests whether
+<code>$v[0]</code> exactly matches the empty string
+<code>""</code>. Note that <code>""</code> is different than
+<code>"0"</code> and <code>0</code> when using <code>eq</code> but
+not when using <code>==</code>.  This has been a recurring source
+of stupid bugs for me.
+
+<p> <code>if</code> is obviously a conditional statement.  Note that,
+unlike C, you must always use the brackets with <code>if</code>
+statements and such, even if (as here) there is only a single line in
+the &#147;then&#148; part of the statement.
+
+<p> Now, if the first element of the <code>@v</code> vector is
+empty, the <code>shift @v;</code> statment is executed.
+<code>shift</code> will dump the first element of the vector.
+(Compare this to <code>pop</code>.)  Note that <code>shift
+@v;</code> could be replaced with <code>@v = @v[1..(@v-1)];</code>
+
+<blockquote><code><pre>    ($fam, $ind, $dad, $mom, $sex) = @v;
+</pre></code></blockquote>
+
+<p> This line is not really necessary, but I find it convenient.  It
+places the first five components of the <code>@v</code> vector into
+<code>$fam</code>, <code>$ind</code>, etc., respectively.  Thus I can
+refer to them as <code>$fam</code> and so forth rather than as
+<code>$v[0]</code>, <code>$v[1]</code>, ..., <code>$v[4]</code>.
+
+<blockquote><code><pre>    $dad{$fam}{$ind} = $dad;
+    $mom{$fam}{$ind} = $mom;
+</pre></code></blockquote>
+
+<p> Oog.  This brings up the issue of <i>hashes</i>.  These are very
+important and incredibly useful, but took me a while to figure out
+(especially in figuring out why I should use them).  Let me try to
+explain them.
+
+<p> A <i>scalar</i> is a single number/string, and is given a name
+like <code>$scalar</code>.  A <i>vector</i> is an ordered set of
+scalars indexed by the whole numbers 0, 1, 2, ..., and is given a name
+like <code>@vector</code>.  We refer to particular elements of the
+vector by <code>$vector[0]</code>, <code>$vector[1]</code>, etc.
+
+<p> Now a <i>hash</i> is an (unordered) set of scalars indexed by
+another set of scalars (called <i>keys</i>), and is given a name like
+<code>%hash</code>.  We refer to particular elements of the hash using
+an expression like <code>$hash{$scalar}</code>.  For example, we might
+have <code>$color{"sky"} = "blue";</code> and <code>$color{"dirt"} =
+"brown";</code>.  Note the use of braces <code>{}</code> rather than
+brackets <code>[]</code> (as is used for vectors) or parentheses
+<code>()</code> (as is used for functions/subroutines).
+
+<p> The <code>%dad</code> and <code>%mom</code> hashes that I am
+forming in these lines are doubly indexed hashes.  Each individual in
+these data has a family ID and an individual ID.  (The individual IDs
+are unique within a family but not necessarily between families.)  So
+here I'm building up tables indicating the ID for the father and
+mother of each individual in each family.
+
+<p> I find hashes useful for at least two reasons.  First, a typical
+study has a bunch of variables measure on each of a set of subjects.
+I find it very convenient to index the measured variables by the
+subjects' IDs rather than keep track of an ordered vector for each
+variable.  (It's particularly convenient for sorting things but subject
+ID, which we'll see below.)  Second, when confronted with a categorial
+variable with an unknown set of possible values, hashes make it very
+convenient to identify the set of distinct possible values (using the
+expression <code>keys %hash</code>...the <code>keys</code> returns a
+vector of the keys to the hash).
+
+<p> This explanation is probably insufficient.  There will be more
+below, and you'll have to dig into some other books/tutorials.
+Hopefully you now at least vaguely understand some of the
+possibilities.
+
+<blockquote><code><pre>    if($sex == 2) {   # make female = 0 rather than = 2
+    $sex{$fam}{$ind} = 0;
+    }
+    else {
+    $sex{$fam}{$ind} = $sex;
+    }
+}
+close(IN);
+</pre></code></blockquote>
+
+<p> This is like the previous bit.  Here I'm also switching the sex = 2
+to sex = 0, since while the input data coded female as 2, CRI-MAP
+codes it as 0.  I then close the <code>$ffile</code> since I'm done
+with it.
+
+<blockquote><code><pre># read genotype data
+open(IN, $gfile) or die("Cannot read from $gfile");
+
+# header line : parse family/individual IDs
+$line = &lt;IN&gt;; chomp($line);
+@v = split(/\s+/, $line);
+if($v[0] eq "") { shift @v; } # if first entry is blank, get rid of it
+shift @v; # get rid of the first entry "Marker"
+</pre></code></blockquote>
+
+<p> I think we should now understand this part.  I open the genotype
+data file, read the initial header line, chomp off any extra newline
+character, split it into a vector at any white space, dump the first
+element if it's empty (if there's leading whitespace on the line), and
+dump the first element (<code>"Marker"</code>) since I'm not
+interested in it.
+
+<blockquote><code><pre>foreach $v (@v) {
+    ($fam,$ind) = split(/-/, $v); # split at '-'
+    push(@fam, $fam);
+    push(@ind, $ind);
+}
+</pre></code></blockquote>
+
+<p> The remaining elements from the header line are of the form
+<code>familyID-indID</code>.  We wish to create two vectors, one
+containing all of the family IDs and the other containing all of the
+individual IDs.
+
+<p> <code>foreach $v (@v)</code> loops through the elements of the
+vector <code>@v</code> one at a time in order; the element is placed
+in <code>$v</code> and the body of the statement is executed.
+
+<p> <code>split</code> breaks the <code>$v</code> scalar at the hyphen
+and places the part in front of the hyphen in <code>$fam</code> and
+the part after in <code>$ind</code>.
+
+<p> The two <code>push</code> lines, as we'd seen earlier, place the
+scalars <code>$fam</code> and <code>$ind</code> onto the end of the
+vectors <code>@fam</code> and <code>@ind</code>, respectively.  Notice
+that I don't need to define or declare these vectors before I use
+them.
+
+<blockquote><code><pre># parse rest of file
+while($line = &lt;IN&gt;) {
+
+    $marker = substr($line, 0, 9);
+    $marker =~ s/\s+//g; # remove any extra spaces
+</pre></code></blockquote>
+
+<p> Here we read the rest of the file, one line at a time.  With these
+lines, we need to work with particular columns (characters): the
+marker name is in columns 1-9; the genotypes follow that, taking up 7
+columns for each individual.
+
+<p> <code>substr($str,$skip,$length)</code> picks out a portion from the
+string <code>$str</code>, first skipping <code>$skip</code> characters
+and picking out a total of <code>$length</code> characters.  So here
+we pick out the first nine characters from <code>$line</code>.
+
+<p> The next line removes any extra whitespace from the marker name.
+This is another use of regular expressions.  The <code>=~</code>
+symbol says to apply the pattern matching on the right to the
+scalar on the left.  The <code>s///g</code> construction does the
+search-and-replace bit.  The <code>s</code> indicates
+search-and-replace.  The stuff between the first and second
+<code>/</code> is the regular expression to search for (here
+<code>\s+</code>, which as we saw before indicates whitespace).  The
+stuff between the second and third <code>/</code> is what to replace
+the found whitespace with.  Since we put nothing there, the whitespace
+is deleted.  The final <code>g</code> indicates to do this globally
+throughout the string.  If we'd left off the <code>g</code>, the line
+would only delete the first bit of whitespace found.
+
+<p> I should emphasize...the last line here gives you a glimpse at the
+power of perl.  I recommend that you look into <code>=~</code> and
+<code>//</code> and <code>s///</code> further!
+
+<blockquote><code><pre>    foreach $i (0..(@fam-1)) {
+    $g = substr($line, 9+$i*7, 7);
+    ($g1, $g2) = split(/\//, $g);  # split at '/'
+    $g1 =~ s/\s+//g; # remove any extra spaces
+    $g2 =~ s/\s+//g;
+</pre></code></blockquote>
+
+<p> Here we have another <code>foreach</code> loop.  Recall that when
+we refer to a <i>vector</i> in a <i>scalar</i> context, it acts like a
+scalar whose value is the <i>length</i> of the vector.  So here
+<code>(0..(@fam-1))</code> creates a vector 0, 1, 2, ... up to 1 less
+than the length of the <code>@fam</code> vector.  (Thus it gives the
+indices for the <code>@fam</code> vector.  So the foreach loop
+repeatedly executes the stuff between the braces, with <code>$i</code>
+incrementing through the indices of the <code>@fam</code> (or
+equivalently the <code>@ind</code>) vector.
+
+<p> In the next line, we use <code>substr</code> to pull out the
+appropriate seven columns from <code>$line</code>.
+
+<p> We then split this at the <code>/</code> symbol.  Note that I need
+to use <code>\/</code> rather than just <code>/</code> so that the
+two regular expression <code>/</code>s aren't confused with their
+contents.
+
+<p> The last two lines in this group remove any extra spaces.  This is
+not really necessary, but it's helpful.
+
+<blockquote><code><pre>	if($g1 == 0 or $g2==0) { # replace blanks with 0's
+            $g1 = 0;
+            $g2 = 0;
+        }
+</pre></code></blockquote>
+
+<p> Here we replace ensure that if the missing values (blank in the
+input data) become 0's (which is what we want in the output data).  We
+also make sure that either both <code>$g1</code> and <code>$g2</code>
+are missing or neither are missing.  (The program CRI-MAP doesn't like
+to have one allele missing and one not.)
+
+<p>The <code>==</code> symbol checks whether <code>$g1</code> or
+<code>$g2</code> is numerically equivalent to 0 (either blank or
+actually a 0).  If either is 0, we give them the explicit value 0.
+Note the use of <code>or</code>.  I like this a lot.  You could also
+use <code>||</code> as in C, but <code>or</code> is nicer to read.
+
+<blockquote><code><pre>	$gen{$fam[$i]}{$ind[$i]}{$marker} = $g1 . " " . $g2;
+
+    }
+}
+close(IN);
+</pre></code></blockquote>
+
+<p> To end this loop and the reading of the genotype data, we form a
+triply indexed hash (indexed by family ID, individual ID, and marker
+name) containing the genotype as two alleles separated by a single
+space.  The periods do string concatenation.
+
+<blockquote><code><pre># write genotype data as cri-map .gen file
+open(OUT, ">$ofile") or die("Cannot write to $ofile");
+</pre></code></blockquote>
+
+<p> Now we've read in all of the data and are ready to write it to the
+output file in CRI-MAP format.  This line opens a file for writing.
+Note the <code>&gt;</code> symbol within the filename indicates
+writing.  Because perl interpolates (is that the right word?) the
+values of variables within quotes, <code>"&gt;$ofile"</code> becomes
+the string <code>"&gt;data.gen"</code> (see the definition of
+<code>$ofile</code> way back at the beginning of this perl script).
+
+<blockquote><code><pre>$nfam = keys %gen;      # number of families
+</pre></code></blockquote>
+
+<p> <code>keys %gen</code> gives a vector of all of the unique keys to
+the hash <code>%gen</code>, which is a triply indexed hash.  Since the
+innermost index is the family ID, this statement gives a vector with
+the distinct family IDs.  Since this vector resides in a <i>scalar</i>
+context, <code>$nfam</code> takes the length of the vector (that is,
+the number of families).
+
+<blockquote><code><pre>print OUT ("$nfam\n");
+</pre></code></blockquote>
+
+<p>We now print the value <code>$nfam</code> to the file
+<code>$ofile</code>.  Recall that <code>\n</code> indicates a newline
+character.  Note that <code>print OUT("$nfam\n");</code> doesn't
+work...you need the space between <code>OUT</code> and the
+<code>(</code>.
+
+<blockquote><code><pre>$nmar = @markers;       # number of markers
+print OUT ("$nmar\n");
+foreach $mar (@markers) {
+    print OUT ("$mar\n");
+}
+</pre></code></blockquote>
+
+<p>Is this part clear, or am I just getting tired?  Print out the
+number of markers followed by the marker names (in the order they had
+appeared in the <code>markers.txt</code> file), one per line.
+
+<blockquote><code><pre>foreach $fam (sort numerically keys %gen) {  # families in numerical order
+</pre></code></blockquote>
+
+<p> Here we use a <code>foreach</code> loop again to loop one-by-one
+through the family IDs.  Recall that <code>keys %gen</code> gives a
+vector containing the set of unique family IDs.  Since the keys to
+hashes are in no special order, and since I wish to print out the
+families in numerical order (not really necessary, but I want to), we
+use <code>sort</code> to sort the vector.  The <code>sort</code>
+function by default sorts things by alphabetical type order (placing
+111 ahead of 20), we need to use a <i>subroutine</i> in order to get
+<code>sort</code> to put things into numerical order.  I'll try to
+explain the <code>numerically</code> subroutine below, where it
+appears at the end of the perl script.
+
+<blockquote><code><pre>    print OUT ("$fam\n");
+</pre></code></blockquote>
+
+<p> We print the family name to the output file.
+
+<blockquote><code><pre>    $nind = keys %{$gen{$fam}};  # number of individuals in family
+    print OUT ("$nind\n");
+</pre></code></blockquote>
+
+<p> This is a bit tricky.  <code>%gen</code> refers to the overall
+hash.  But since this is a triply indexed hash,
+<code>%{$gen{$fam}}</code> refers to the part of the hash
+corresponding to the family <code>$fam</code> (whatever family we
+happen to be on so far in the loop).  The keys to the hash
+<code>%{$gen{$fam}}</code> are the individual IDs for family
+<code>$fam</code>.  Thus <code>$nind</code> takes the number of
+individuals in this family, which we print to the output file (on a
+separate line).
+
+<p> If you study the brackets and <code>%</code> and <code>$</code>
+symbols here, I think you'll make a good step towards how to work with
+these multiply indexed hashes and arrays, but no doubt further
+study/reading will be necessary.  It may take a while, but it all will
+become clear eventually.
+
+<blockquote><code><pre>    foreach $ind (sort numerically keys %{$gen{$fam}}) {
+    print OUT ("$ind $mom{$fam}{$ind} $dad{$fam}{$ind} $sex{$fam}{$ind}\n");
+</pre></code></blockquote>
+
+<p> Now we loop through each individual (sorted numerically...see
+below) in the family <code>$fam</code> and print out a line containing
+his/her ID, mother, father and sex.
+
+<blockquote><code><pre>	foreach $mar (@markers) {  # markers in order
+        print OUT ("$gen{$fam}{$ind}{$mar} ");
+    }
+
+    print OUT ("\n");
+    }
+}
+close(OUT);
+</pre></code></blockquote>
+
+<p> Here we loop through the marker names, in the order in which they
+appeared in the <code>marker.txt</code> file.  We print, on a single
+line, the genotypes for the individual, separated by spaces.  There
+will be an extra space at the end of the line, but that doesn't
+matter.  Then we close the output file, and we're done (except for
+explaining that subroutine).
+
+<blockquote><code><pre># subroutine to allow sorts by numerical order
+sub numerically { $a <=> $b; }
+</pre></code></blockquote>
+
+<p> Subroutines are very useful in breaking up complex perl
+programs into pieces; if the pieces are chosen carefully, you can
+create nicely modular, reuseable code.
+
+<p> The definition of a subroutine begins with the word
+<code>sub</code> followed by the name of the subroutine.  Then the
+definition is given in brackets.
+
+<p> This is a special kind of subroutine to be used by the
+<code>sort</code> function.  The one line in the subroutine
+takes value 0 if <code>$a</code> is the same (numerically) as
+<code>$b</code>, and is positive (negative) if <code>$a</code> is
+bigger (smaller) than <code>$b</code>.  I won't explain this further,
+but will leave it to you to read further.
+
+<a name="other"><h3>Other things</h3></a>
+
+<p>To print an array separated by something other than spaces (for
+example, commas) use the function <code>join</code>:
+<blockquote><code><pre>#print @res separated by commas
+print OUT (join(",", @res), "\n");
+</pre></code></blockquote>
+
+
+
+<p class=noindent><hr>
+<table cellspacing="0" cellpadding="0" width=100%>
+<tr><td align="left"><p class=noindent>
+<a href="../index.html">Back to home page</a>
+<td align="right"><font size=1>
+<!-- hhmts start -->
+Last modified: Mon Feb  4 08:48:50 2013
+<!-- hhmts end -->
+</table>
+</body></html>
